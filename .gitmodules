@@ -1,0 +1,15 @@
+[submodule "vendor/golang.org/x/time"]
+	path = vendor/golang.org/x/time
+	url = https://github.com/golang/time
+[submodule "vendor/github.com/fiorix/go-smpp"]
+	path = vendor/github.com/fiorix/go-smpp
+	url = https://github.com/fiorix/go-smpp
+[submodule "vendor/github.com/temoto/go-sqlite3"]
+	path = vendor/github.com/temoto/go-sqlite3
+	url = https://github.com/temoto/go-sqlite3
+[submodule "vendor/github.com/gogo/protobuf"]
+	path = vendor/github.com/gogo/protobuf
+	url = https://github.com/gogo/protobuf
+[submodule "vendor/github.com/coreos/go-systemd"]
+	path = vendor/github.com/coreos/go-systemd
+	url = https://github.com/coreos/go-systemd
