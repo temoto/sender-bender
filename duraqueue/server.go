@@ -149,12 +149,12 @@ func (self *DuraQueue) Wait() {
 	self.alive.Wait()
 }
 
-func (self *DuraQueue) PushTalkSMSMessage(ctx context.Context, msg *bendertalk.SMSMessage) error {
+func (self *DuraQueue) PushTalkSMSMessage(ctx context.Context, msg *bendertalk.SMSMessage) (string, error) {
 	t := TaskFromTalk(msg)
 	t.execer = self.db
 	t.Worker = self.workerName
-	t.Store(ctx)
-	return nil
+	err := t.Store(ctx)
+	return t.Id, err
 }
 
 // lock scheduled and fetch into memory

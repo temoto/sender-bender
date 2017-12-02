@@ -123,15 +123,12 @@ func SMPPServerHandle(ctx context.Context, c *smpp_server.SMPPConn, p pdu.Body) 
 		log.Printf("smpp_server %s submit_sm seq=%d from=%s to=%s text='%s'",
 			c, p.Header().Seq, msg.From, msg.To, msg.Text)
 		msg.ScheduleUnix = 1
-		contextGetDuraQueue(ctx).PushTalkSMSMessage(ctx, msg)
+		dqId, _ := contextGetDuraQueue(ctx).PushTalkSMSMessage(ctx, msg)
 
 		resp := c.BuildResp(p)
 		resp.Header().Status = 0
-		resp.Fields().Set(pdufield.MessageID, "randomshit")
+		resp.Fields().Set(pdufield.MessageID, dqId)
 		c.Send(resp)
-
-		// debug stop after first message
-		time.AfterFunc(1*time.Second, c.StopServer)
 	default:
 		log.Printf("smpp_server %s unknown pdu id %s (%08x) data %#v", c, p.Header().ID, int(p.Header().ID), p)
 	}
