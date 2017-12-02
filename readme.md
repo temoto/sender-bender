@@ -20,4 +20,6 @@ Future features
 * route messages to different SMPP servers
 * delay (avoid night delivery)
 * check delivery status
-* other methods Whatsapp, Telegram, push notification, etc
+* deliver messages via Email
+* deliver messages via Telegram
+* deliver messages via Whatsapp

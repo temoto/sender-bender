@@ -1,0 +1,130 @@
+syntax = "proto3";
+package bendertalk;
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+option (gogoproto.equal_all) = true;
+option (gogoproto.goproto_getters_all) = false;
+option (gogoproto.goproto_stringer_all) = false;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.stringer_all) = true;
+option (gogoproto.testgen_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.verbose_equal_all) = true;
+
+
+enum RequestType {
+	Ping = 0;
+	SendSMS = 1;
+}
+
+enum ResponseStatus {
+	// Error codes:
+	// 1-99: protocol level errors
+	// 100-199: sendsms
+	StatusOk = 0;
+	StatusError = 1;    // generic error, read message for details
+	InvalidVersion = 2; // incompatible request version
+	InvalidType = 3;    // unknown request type
+	InvalidId = 4;      // request id repeated in short time
+
+	// SendSMS 100-199
+	InvalidNumber = 100;
+	InvalidText = 101;
+	InvalidSignature = 102;
+	InvalidTime = 103;
+}
+
+message Request {
+	uint32 version = 1;
+	uint64 id = 2;
+	RequestType type = 3;
+	string access_token = 4;
+	string tenant = 5;
+	bool debug = 6; // append debug information to Response error_text
+	bool dry_run = 7;
+
+	// Ping is empty
+	repeated SMSMessage sms = 51;
+}
+
+message Response {
+	uint32 version = 1;
+	uint64 request_id = 2;
+	ResponseStatus status = 3;
+	string error = 4;
+	repeated string debug = 5;
+
+	repeated SMSMessage sms = 51;
+}
+
+enum SMPPMessageState {
+	SMPPMessageState_Attempt = 0;
+	SMPPMessageState_Enroute = 1;
+	SMPPMessageState_Delivered = 2;
+	SMPPMessageState_Expired = 3;
+	SMPPMessageState_Deleted = 4;
+	SMPPMessageState_Undeliverable = 5;
+	SMPPMessageState_Accepted = 6;
+	SMPPMessageState_Unknown = 7;
+	SMPPMessageState_Rejected = 8;
+	SMPPMessageState_Skipped = 9;
+}
+
+enum SMPPMessagingMode {
+	SMPPMessagingMode_Default = 0;
+	SMPPMessagingMode_Datagram = 1;
+	SMPPMessagingMode_Transaction = 2;
+	SMPPMessagingMode_StoreForward = 3;
+}
+
+message SMSMessage {
+	// input: from, to, text, mode, schedule_unix, validity_unix, delivery_hours_utc
+	// output: id, delivery_status
+	string id = 1;
+	string from = 2;
+	string to = 3;
+	string text = 4;
+	SMPPMessagingMode mode = 5;
+	int64 validity_unix = 6;
+	int64 schedule_unix = 7;
+	SMPPMessageState state = 8;
+
+	uint32 delivery_hours_utc = 16;
+	string application_tag = 17; // senderbender does not use this field, but your application may
+	string delivery_check_upstream = 18;
+	// SMPPMessage smpp = 19;
+}
+
+message SMPPMessage {
+	// SMPP send mandatory
+	string src_addr = 1;
+	string dest_addr = 2;
+	bytes short_text = 3;
+	uint32 esm_class = 5;
+	uint32 data_coding = 6;
+	uint32 registered_delivery = 7;
+	string validity_period = 8;
+	string service_type = 16;
+	uint32 src_addr_ton = 17;
+	uint32 src_addr_npi = 18;
+	uint32 dest_addr_ton = 19;
+	uint32 dest_addr_npi = 20;
+	uint32 protocol_id = 21;
+	uint32 priority_flag = 22;
+	uint32 replace_if_present_flag = 25;
+
+	// SMPP send TLV
+	uint32 sar_msg_ref_num = 40;
+	uint32 sar_total_segments = 41;
+	uint32 sar_segment_seqnum = 42;
+	bool more_messages_to_send = 43;
+	uint32 payload_type = 44;
+	bytes message_payload = 45;
+	uint64 user_message_reference = 46;
+
+	// SMPP response TLV
+	uint32 network_error_code = 60;
+	string receipted_message_id = 62;
+}
