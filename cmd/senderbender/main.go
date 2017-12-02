@@ -32,7 +32,7 @@ func main() {
 		log.Fatal(err)
 	} else if wdTime != 0 {
 		go func() {
-			for _ = range time.Tick(wdTime) {
+			for range time.Tick(wdTime) {
 				sdnotify("WATCHDOG=1\n")
 			}
 		}()

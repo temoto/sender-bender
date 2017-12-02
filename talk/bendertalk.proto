@@ -60,23 +60,23 @@ message Response {
 }
 
 enum SMPPMessageState {
-	SMPPMessageState_Attempt = 0;
-	SMPPMessageState_Enroute = 1;
-	SMPPMessageState_Delivered = 2;
-	SMPPMessageState_Expired = 3;
-	SMPPMessageState_Deleted = 4;
-	SMPPMessageState_Undeliverable = 5;
-	SMPPMessageState_Accepted = 6;
-	SMPPMessageState_Unknown = 7;
-	SMPPMessageState_Rejected = 8;
-	SMPPMessageState_Skipped = 9;
+	SMPPMessageStateAttempt = 0;
+	SMPPMessageStateEnroute = 1;
+	SMPPMessageStateDelivered = 2;
+	SMPPMessageStateExpired = 3;
+	SMPPMessageStateDeleted = 4;
+	SMPPMessageStateUndeliverable = 5;
+	SMPPMessageStateAccepted = 6;
+	SMPPMessageStateUnknown = 7;
+	SMPPMessageStateRejected = 8;
+	SMPPMessageStateSkipped = 9;
 }
 
 enum SMPPMessagingMode {
-	SMPPMessagingMode_Default = 0;
-	SMPPMessagingMode_Datagram = 1;
-	SMPPMessagingMode_Transaction = 2;
-	SMPPMessagingMode_StoreForward = 3;
+	SMPPMessagingModeDefault = 0;
+	SMPPMessagingModeDatagram = 1;
+	SMPPMessagingModeTransaction = 2;
+	SMPPMessagingModeStoreForward = 3;
 }
 
 message SMSMessage {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	_ "github.com/temoto/go-sqlite3"
+	_ "github.com/temoto/go-sqlite3" // happy golint
 	"github.com/temoto/senderbender/alive"
 	"github.com/temoto/senderbender/junk"
 	"github.com/temoto/senderbender/talk"
@@ -43,7 +43,7 @@ func contextWithDbTimeoutMax(parent context.Context) context.Context {
 	return ctx
 }
 
-func (self *DuraQueue) Init(ctx context.Context, dburl string, handle HandleFunc) {
+func (self *DuraQueue) Init(ctx context.Context, dbURL string, handle HandleFunc) {
 	self.alive = alive.NewAlive()
 	self.queue = make([]*Task, 0, configQueueSize(ctx))
 	self.pullAgain = time.NewTimer(time.Minute)
@@ -62,7 +62,7 @@ func (self *DuraQueue) Init(ctx context.Context, dburl string, handle HandleFunc
 	if junk.MustContextGetBool(ctx, "log-debug") {
 		dbDriver = "sqlite3_tracing"
 	}
-	if self.db, err = sql.Open(dbDriver, dburl); err != nil {
+	if self.db, err = sql.Open(dbDriver, dbURL); err != nil {
 		log.Fatal(err)
 	}
 	initQueries := []string{

@@ -1,6 +1,13 @@
 {
     "Deadline": 60000000000,
     "Exclude": [
+        "\\.pb\\.go.+ \\d+ other occurrence\\(s\\) of \"nil\" found in",
+        "\\.pb\\.go.+don't use underscores in Go names",
+        "\\.pb\\.go.+should use 'return <expr>' instead of 'if <expr> { return <bool> }; return <bool>",
+        "comment on exported \\w+ \\w+ should be of the form",
+        "package comment should be of the form \"Package ",
+        "receiver name should be a reflection of its identity",
+        "should be \\w*ID\\w*",
         "should have comment or be unexported"
     ],
     "Tests": true,

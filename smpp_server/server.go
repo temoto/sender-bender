@@ -30,7 +30,7 @@ type SMPPServer struct {
 
 type SMPPConnHandler func(context.Context, *SMPPServer, *SMPPConn)
 
-func NewSMPPServer(listenUrl string, handleConn SMPPConnHandler, handlePdu PduHandler) (*SMPPServer, error) {
+func NewSMPPServer(listenURL string, handleConn SMPPConnHandler, handlePdu PduHandler) (*SMPPServer, error) {
 	var err error
 	if handleConn == nil {
 		handleConn = defaultHandleConn
@@ -44,7 +44,7 @@ func NewSMPPServer(listenUrl string, handleConn SMPPConnHandler, handlePdu PduHa
 		defaultPduHandler: handlePdu,
 	}
 	var u *url.URL
-	if u, err = url.Parse(listenUrl); err != nil {
+	if u, err = url.Parse(listenURL); err != nil {
 		return nil, err
 	}
 	if s.l, err = net.Listen(u.Scheme, u.Host); err != nil {
@@ -54,8 +54,8 @@ func NewSMPPServer(listenUrl string, handleConn SMPPConnHandler, handlePdu PduHa
 	return s, nil
 }
 
-func MustSMPPServer(listenUrl string, handleConn SMPPConnHandler, handlePdu PduHandler) *SMPPServer {
-	s, err := NewSMPPServer(listenUrl, handleConn, handlePdu)
+func MustSMPPServer(listenURL string, handleConn SMPPConnHandler, handlePdu PduHandler) *SMPPServer {
+	s, err := NewSMPPServer(listenURL, handleConn, handlePdu)
 	if err != nil {
 		log.Fatal(err)
 	}

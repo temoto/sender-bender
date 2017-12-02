@@ -1,4 +1,5 @@
 // +build trace
+
 package duraqueue
 
 import (
