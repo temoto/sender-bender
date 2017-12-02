@@ -1,0 +1,51 @@
+commit 79ff540f8aabb8c463c86ea9e848147adde6389f
+Author: Sergey Shepelev <temotor@gmail.com>
+Date:   Sat Dec 2 08:44:42 2017 +0300
+
+    queryresp access MsgStateCode; TLVBody Set() data
+
+diff --git a/smpp/pdu/pdufield/tlvbody.go b/smpp/pdu/pdufield/tlvbody.go
+index e49467c..604e92d 100644
+--- a/smpp/pdu/pdufield/tlvbody.go
++++ b/smpp/pdu/pdufield/tlvbody.go
+@@ -71,6 +71,11 @@ func (tlv *TLVBody) Bytes() []byte {
+ 	return tlv.data
+ }
+ 
++func (tlv *TLVBody) Set(d []byte) {
++	tlv.data = d
++	tlv.Len = uint16(len(d))
++}
++
+ // SerializeTo serializes TLV data to its binary form.
+ func (tlv *TLVBody) SerializeTo(w io.Writer) error {
+ 	b := make([]byte, 4+len(tlv.data))
+diff --git a/smpp/transmitter.go b/smpp/transmitter.go
+index cf0b7e8..d0d7c4d 100644
+--- a/smpp/transmitter.go
++++ b/smpp/transmitter.go
+@@ -494,10 +494,11 @@ func (t *Transmitter) submitMsgMulti(sm *ShortMessage, p pdu.Body, dataCoding ui
+ 
+ // QueryResp contains the parsed the response of a QuerySM request.
+ type QueryResp struct {
+-	MsgID     string
+-	MsgState  string
+-	FinalDate string
+-	ErrCode   uint8
++	MsgID        string
++	MsgStateCode uint8
++	MsgState     string
++	FinalDate    string
++	ErrCode      uint8
+ }
+ 
+ // QuerySM queries the delivery status of a message. It requires the
+@@ -525,7 +526,7 @@ func (t *Transmitter) QuerySM(src, msgid string, srcTON, srcNPI uint8) (*QueryRe
+ 	if ms == nil {
+ 		return nil, fmt.Errorf("no state available")
+ 	}
+-	qr := &QueryResp{MsgID: msgid}
++	qr := &QueryResp{MsgID: msgid, MsgStateCode: ms.Bytes()[0]}
+ 	switch ms.Bytes()[0] {
+ 	case 0:
+ 		qr.MsgState = "SCHEDULED"

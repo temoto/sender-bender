@@ -16,7 +16,10 @@ go get \
   github.com/gogo/protobuf/proto \
   github.com/gogo/protobuf/protoc-gen-gogoslick \
   github.com/gogo/protobuf/gogoproto
-git submodule update --init
+
+git submodule update --init --recursive --checkout
+git submodule foreach git checkout -f .
+patch -d ./vendor/github.com/fiorix/go-smpp --forward -r- -p1 --batch <patch/go-smpp-01.patch || true
 
 go get -tags trace ./vendor/github.com/temoto/go-sqlite3
 
