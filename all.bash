@@ -27,8 +27,11 @@ go get \
   github.com/gogo/protobuf/gogoproto
 
 git submodule update --init --recursive --checkout
-git submodule foreach git checkout -f .
-patch -d ./vendor/github.com/fiorix/go-smpp --forward -r- -p1 --batch <patch/go-smpp-01.patch || true
+
+# hopefully this is a temporary measure and in future we will
+# use original fiorix/go-smpp with all relevant patches included
+git config submodule.vendor/github.com/temoto/go-smpp.ignore dirty
+sed -i'' -e 's/github.com\/fiorix\/go-smpp/github.com\/temoto\/go-smpp/' ./vendor/github.com/temoto/go-smpp/**/*.go
 
 go get -tags trace ./vendor/github.com/temoto/go-sqlite3
 
