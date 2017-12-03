@@ -14,9 +14,10 @@ import (
 )
 
 type Sender struct {
-	alive *alive.Alive
-	lk    sync.RWMutex
-	trxs  map[string]*smpp.Transceiver
+	Handle smpp.HandlerFunc
+	alive  *alive.Alive
+	lk     sync.RWMutex
+	trxs   map[string]*smpp.Transceiver
 }
 
 func queryGetInt(query url.Values, key string) (int, bool) {

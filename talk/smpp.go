@@ -1,6 +1,7 @@
 package bendertalk
 
 import (
+	"time"
 	"unicode"
 )
 
@@ -51,4 +52,11 @@ func stringIsDigit(s string) bool {
 		}
 	}
 	return true
+}
+
+// Absolute time format YYMMDDhhmmsstnnp, see SMPP3.4 spec 7.1.1.
+// time is converted to UTC and formatted as ...00+
+// tens of seconds field is always zero
+func TimeToSMPP(t time.Time) string {
+	return t.UTC().Format("060102150405") + "000+"
 }

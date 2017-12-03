@@ -3,6 +3,7 @@ package duraqueue
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/temoto/go-sqlite3" // happy golint
 	"github.com/temoto/senderbender/alive"
@@ -17,18 +18,19 @@ import (
 
 // Durable Queue, persistent in SQLite database
 type DuraQueue struct {
-	alive      *alive.Alive
-	db         *sql.DB
-	handle     HandleFunc
-	lockStmt   *sql.Stmt
-	pickupStmt *sql.Stmt
-	pullAgain  *time.Timer
-	pullStmt   *sql.Stmt
-	pushStmt   *sql.Stmt
-	qlk        sync.RWMutex
-	queue      []*Task
-	unlockStmt *sql.Stmt
-	workerName string
+	Handle      HandleFunc
+	WorkerName  string
+	alive       *alive.Alive
+	db          *sql.DB
+	lockStmt    *sql.Stmt
+	pickupStmt  *sql.Stmt
+	pullAgain   *time.Timer
+	pullStmt    *sql.Stmt
+	pushStmt    *sql.Stmt
+	queryIdStmt *sql.Stmt
+	qlk         sync.RWMutex
+	queue       []*Task
+	unlockStmt  *sql.Stmt
 }
 
 type HandleFunc func(ctx context.Context, task *Task)
@@ -43,18 +45,19 @@ func contextWithDbTimeoutMax(parent context.Context) context.Context {
 	return ctx
 }
 
-func (self *DuraQueue) Init(ctx context.Context, dbURL string, handle HandleFunc) {
+func (self *DuraQueue) Init(ctx context.Context, dbURL string) {
 	self.alive = alive.NewAlive()
 	self.queue = make([]*Task, 0, configQueueSize(ctx))
 	self.pullAgain = time.NewTimer(time.Minute)
 	self.pullAgain.Stop()
-	self.handle = handle
 
-	if hostname, err := os.Hostname(); err != nil {
-		log.Fatal("duraqueue._init os.Hostname() error:", err)
-	} else {
-		self.workerName = fmt.Sprintf("host:%s:pid:%d:started:%s",
-			hostname, os.Getpid(), time.Now().UTC().Truncate(time.Minute).Format("2006-01-02T15:04"))
+	if self.WorkerName == "" {
+		if hostname, err := os.Hostname(); err != nil {
+			log.Fatal("duraqueue._init os.Hostname() error:", err)
+		} else {
+			self.WorkerName = fmt.Sprintf("host:%s:pid:%d:started:%s",
+				hostname, os.Getpid(), time.Now().UTC().Truncate(time.Minute).Format("2006-01-02T15:04"))
+		}
 	}
 
 	var err error
@@ -98,6 +101,9 @@ func (self *DuraQueue) Init(ctx context.Context, dbURL string, handle HandleFunc
 		ctx, self.db, `update queue set modified = current_timestamp, locked = null, worker = null
 	where (locked is not null) and (? like '% '||id||' %')`,
 		"DuraQueue.Init db prepare queue unlock statement ")
+	self.queryIdStmt = junk.MustPrepare(
+		ctx, self.db, `select * from queue where id = ? limit 1 union select * from archive where id = ? limit 1`,
+		"DuraQueue.Init db prepare queryId statement ")
 
 	// 3 lines probably worth moving to a function to repeat stats info regularly
 	totalQueueCount := junk.MustSelectInt(ctx, self.db, `select count(*) from queue`, "DuraQueue.Init db totalQueueCount ")
@@ -149,12 +155,35 @@ func (self *DuraQueue) Wait() {
 	self.alive.Wait()
 }
 
-func (self *DuraQueue) PushTalkSMSMessage(ctx context.Context, msg *bendertalk.SMSMessage) (string, error) {
-	t := TaskFromTalk(msg)
+func (self *DuraQueue) PushSMSMessage(ctx context.Context, msg *bendertalk.SMSMessage) (string, error) {
+	t := TaskFromSMSMessage(msg)
 	t.execer = self.db
-	t.Worker = self.workerName
+	t.Worker = self.WorkerName
 	err := t.Store(ctx)
 	return t.Id, err
+}
+
+func (self *DuraQueue) QueryId(ctx context.Context, id string) (*Task, error) {
+	if len(id) < 3 {
+		return nil, errors.New(fmt.Sprintf("invalid duraqueue id='%s', too short", id))
+	}
+	rows, err := self.queryIdStmt.QueryContext(contextWithDbTimeoutFast(ctx), id, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	ts, err := tasksFromRows(rows, 2)
+	if err != nil {
+		return nil, err
+	}
+	if len(ts) == 0 {
+		// no such id
+		return nil, nil
+	}
+	if len(ts) > 1 {
+		log.Printf("BUG duraqueue.QueryId id=%s is present in both queue and archive tables")
+	}
+	return ts[0], nil
 }
 
 // lock scheduled and fetch into memory
@@ -185,7 +214,7 @@ func (self *DuraQueue) loadFromDB(ctx context.Context) error {
 		log.Printf("duraqueue.loadFromDB lock error: %s", err)
 	}
 	itemsNew, err := TasksLoadPrepared(contextWithDbTimeoutFast(ctx), self.pullStmt,
-		self.workerName, limit)
+		self.WorkerName, limit)
 
 	if err != nil {
 		log.Printf("duraqueue.loadFromDB pull error: %s", err)
@@ -197,7 +226,7 @@ func (self *DuraQueue) loadFromDB(ctx context.Context) error {
 }
 
 func (self *DuraQueue) unsafeDBLock(ctx context.Context, limit int) error {
-	r, err := self.lockStmt.ExecContext(contextWithDbTimeoutFast(ctx), self.workerName, limit)
+	r, err := self.lockStmt.ExecContext(contextWithDbTimeoutFast(ctx), self.WorkerName, limit)
 	if err != nil {
 		return err
 	}
@@ -273,5 +302,5 @@ func (self *DuraQueue) dispatch(ctx context.Context) int {
 
 func (self *DuraQueue) handleWrap(ctx context.Context, t *Task) {
 	t.execer = self.db
-	self.handle(ctx, t)
+	self.Handle(ctx, t)
 }

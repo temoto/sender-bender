@@ -81,7 +81,7 @@ enum SMPPMessagingMode {
 
 message SMSMessage {
 	// input: from, to, text, mode, schedule_unix, validity_unix, delivery_hours_utc
-	// output: id, delivery_status
+	// output: id, state, network_error_code
 	string id = 1;
 	string from = 2;
 	string to = 3;
@@ -90,6 +90,7 @@ message SMSMessage {
 	int64 validity_unix = 6;
 	int64 schedule_unix = 7;
 	SMPPMessageState state = 8;
+	uint32 network_error_code = 9;
 
 	uint32 delivery_hours_utc = 16;
 	string application_tag = 17; // senderbender does not use this field, but your application may

@@ -55,7 +55,7 @@ func (self Task) String() string {
 	)
 }
 
-func (self *Task) ToTalk() (*bendertalk.SMSMessage, error) {
+func (self *Task) ToSMSMessage() (*bendertalk.SMSMessage, error) {
 	msg := new(bendertalk.SMSMessage)
 	if err := msg.Unmarshal(self.Data); err != nil {
 		return nil, err
@@ -63,11 +63,11 @@ func (self *Task) ToTalk() (*bendertalk.SMSMessage, error) {
 	return msg, nil
 }
 
-func (self *Task) UpdateStatus(msg *bendertalk.SMSMessage) {
-	self.Status = strings.Replace(msg.State.String(), "SMPPMessageState_", "", 1)
+func TalkStateToStatus(state bendertalk.SMPPMessageState) string {
+	return strings.Replace(state.String(), "SMPPMessageState", "", 1)
 }
 
-func TaskFromTalk(msg *bendertalk.SMSMessage) *Task {
+func TaskFromSMSMessage(msg *bendertalk.SMSMessage) *Task {
 	msgBytes, err := msg.Marshal()
 	if err != nil {
 		log.Fatalf("bend.TaskFromData msg.Marshal error: %s msg=%#v", err, msg)
@@ -86,7 +86,7 @@ func TaskFromTalk(msg *bendertalk.SMSMessage) *Task {
 	if msg.ScheduleUnix != 0 {
 		self.Scheduled = time.Unix(msg.ScheduleUnix, 0).UTC()
 	}
-	self.UpdateStatus(msg)
+	self.Status = TalkStateToStatus(msg.State)
 	return self
 }
 
@@ -100,30 +100,6 @@ func TasksLoadPrepared(ctx context.Context, stmt *sql.Stmt, args ...interface{})
 	return ts, err
 }
 
-func tasksFromRows(rows *sql.Rows, allocateLength int) ([]*Task, error) {
-	result := make([]*Task, 0, allocateLength)
-	columns, err := rows.Columns()
-	if err != nil {
-		log.Fatal("duraqueue.tasksFromRows Columns() error: %s", err)
-	}
-	for rows.Next() {
-		self := new(Task)
-		if len(columns) == 1 {
-			err = rows.Scan(&self.Id)
-		} else {
-			err = rows.Scan(&self.Id, &self.Created, &self.Modified, &self.Scheduled, &self.Locked,
-				&self.Worker, &self.Status, &self.MsgFrom, &self.MsgTo, &self.MsgText, &self.Data)
-		}
-		if err != nil {
-			log.Fatalf("BUG duraqueue.tasksFromRows rows.Scan error: %s", err)
-		}
-		// log.Printf("debug duraqueue.tasksFromRows row: %s", self)
-		result = append(result, self)
-	}
-	err = rows.Err()
-	return result, err
-}
-
 func (self *Task) Store(ctx context.Context) error {
 	if self.execer == nil {
 		log.Fatal("BUG duraqueue.Task.Store is called without execer field. task=%s", self)
@@ -131,8 +107,8 @@ func (self *Task) Store(ctx context.Context) error {
 	}
 
 	// FIXME: remove excess marshal/unmarhsal
-	if msg, _ := self.ToTalk(); msg != nil {
-		self.UpdateStatus(msg)
+	if msg, _ := self.ToSMSMessage(); msg != nil {
+		self.Status = TalkStateToStatus(msg.State)
 	}
 	nullLocked := &self.Locked
 	if self.Locked.IsZero() {
@@ -176,8 +152,8 @@ func (self *Task) Archive(ctx context.Context) error {
 	self.Modified = time.Now().UTC().Truncate(time.Second)
 	self.Locked = time.Time{}
 	// FIXME: remove excess marshal/unmarhsal
-	if msg, _ := self.ToTalk(); msg != nil {
-		self.UpdateStatus(msg)
+	if msg, _ := self.ToSMSMessage(); msg != nil {
+		self.Status = TalkStateToStatus(msg.State)
 	}
 
 	var err error
@@ -201,4 +177,28 @@ func (self *Task) Archive(ctx context.Context) error {
 	}
 	log.Fatalf("duraqueue.Archive db error was not resolved after 3 tries so we stop")
 	return err
+}
+
+func tasksFromRows(rows *sql.Rows, allocateLength int) ([]*Task, error) {
+	result := make([]*Task, 0, allocateLength)
+	columns, err := rows.Columns()
+	if err != nil {
+		log.Fatal("duraqueue.tasksFromRows Columns() error: %s", err)
+	}
+	for rows.Next() {
+		self := new(Task)
+		if len(columns) == 1 {
+			err = rows.Scan(&self.Id)
+		} else {
+			err = rows.Scan(&self.Id, &self.Created, &self.Modified, &self.Scheduled, &self.Locked,
+				&self.Worker, &self.Status, &self.MsgFrom, &self.MsgTo, &self.MsgText, &self.Data)
+		}
+		if err != nil {
+			log.Fatalf("BUG duraqueue.tasksFromRows rows.Scan error: %s", err)
+		}
+		// log.Printf("debug duraqueue.tasksFromRows row: %s", self)
+		result = append(result, self)
+	}
+	err = rows.Err()
+	return result, err
 }
