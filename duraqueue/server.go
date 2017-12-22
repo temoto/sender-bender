@@ -136,7 +136,7 @@ runLoop:
 			break runLoop
 		case <-delayt.C:
 		case <-housekeep.C:
-			junk.MustExec(ctx, self.db, `vacuum full`, "duraqueue.Run vacuum full")
+			junk.MustExec(ctx, self.db, `vacuum`, "duraqueue.Run vacuum full ")
 		}
 	}
 
