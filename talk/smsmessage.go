@@ -2,10 +2,10 @@ package bendertalk
 
 import (
 	"encoding/base64"
-	"github.com/fiorix/go-smpp/smpp"
-	"github.com/fiorix/go-smpp/smpp/pdu"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
-	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"
+	"github.com/temoto/go-smpp/smpp"
+	"github.com/temoto/go-smpp/smpp/pdu"
+	"github.com/temoto/go-smpp/smpp/pdu/pdufield"
+	"github.com/temoto/go-smpp/smpp/pdu/pdutext"
 	"hash/fnv"
 	"log"
 	"strconv"
@@ -60,9 +60,7 @@ func (self *SMSMessage) WriteToPdu(p pdu.Body, esmclass uint8) {
 	p.Fields().Set(pdufield.ESMClass, esmclass)
 	p.Fields().Set(pdufield.DataCoding, pdutext.UCS2Type)
 	p.Fields().Set(pdufield.ValidityPeriod, "000003000000000R")
-	tlvPayload := &pdufield.TLVBody{Tag: pdufield.MessagePayload}
-	tlvPayload.Set(pdutext.UCS2(self.Text).Encode())
-	p.TLVFields()[pdufield.MessagePayload] = tlvPayload
+	p.TLVFields().Set(pdufield.MessagePayload, pdutext.UCS2(self.Text))
 	p.Fields().Set(pdufield.RegisteredDelivery, pdufield.FinalDeliveryReceipt)
 	ston, snpi := smppTonNpiFor(self.From)
 	dton, dnpi := smppTonNpiFor(self.To)

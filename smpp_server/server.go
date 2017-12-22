@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/fiorix/go-smpp/smpp/pdu"
+	"github.com/temoto/go-smpp/smpp/pdu"
 	"github.com/temoto/senderbender/alive"
 	"github.com/temoto/senderbender/junk"
 	"io"

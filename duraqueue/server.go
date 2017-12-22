@@ -87,9 +87,10 @@ func (self *DuraQueue) Init(ctx context.Context, dbURL string) {
 	}
 	self.lockStmt = junk.MustPrepare(
 		ctx, self.db, `update queue set locked = current_timestamp, worker = ?
-	where (locked is null) and (scheduled < current_timestamp)
-	order by scheduled
-	limit ?`,
+	where rowid in (
+		select rowid from queue where (locked is null) and (scheduled < current_timestamp)
+		order by scheduled
+		limit ?)`,
 		"DuraQueue.Init db prepare queue lock statement ")
 	self.pickupStmt = junk.MustPrepare(
 		ctx, self.db, `select * from queue where locked < ? limit ?`,
@@ -102,10 +103,10 @@ func (self *DuraQueue) Init(ctx context.Context, dbURL string) {
 	where (locked is not null) and (? like '% '||id||' %')`,
 		"DuraQueue.Init db prepare queue unlock statement ")
 	self.queryIdStmt = junk.MustPrepare(
-		ctx, self.db, `select * from queue where id = ? limit 1 union select * from archive where id = ? limit 1`,
+		ctx, self.db, `select * from queue where id = ? union select * from archive where id = ?`,
 		"DuraQueue.Init db prepare queryId statement ")
 
-	// 3 lines probably worth moving to a function to repeat stats info regularly
+	// show queue stats
 	totalQueueCount := junk.MustSelectInt(ctx, self.db, `select count(*) from queue`, "DuraQueue.Init db totalQueueCount ")
 	lockedCount := junk.MustSelectInt(ctx, self.db, `select count(*) from queue where locked is not null`, "duraqueue.Init db lockedCount ")
 	log.Printf("DuraQueue.Init db queue: %d locked of %d total", lockedCount, totalQueueCount)

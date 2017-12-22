@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/fiorix/go-smpp/smpp"
+	"github.com/temoto/go-smpp/smpp"
 	"github.com/temoto/senderbender/alive"
 	"github.com/temoto/senderbender/talk"
 	"golang.org/x/time/rate"
