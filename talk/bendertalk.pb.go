@@ -347,10 +347,7 @@ func (this *Request) VerboseEqual(that interface{}) error {
 }
 func (this *Request) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Request)
@@ -363,10 +360,7 @@ func (this *Request) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -458,10 +452,7 @@ func (this *Response) VerboseEqual(that interface{}) error {
 }
 func (this *Response) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*Response)
@@ -474,10 +465,7 @@ func (this *Response) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -576,10 +564,7 @@ func (this *SMSMessage) VerboseEqual(that interface{}) error {
 }
 func (this *SMSMessage) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*SMSMessage)
@@ -592,10 +577,7 @@ func (this *SMSMessage) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}
@@ -738,10 +720,7 @@ func (this *SMPPMessage) VerboseEqual(that interface{}) error {
 }
 func (this *SMPPMessage) Equal(that interface{}) bool {
 	if that == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	}
 
 	that1, ok := that.(*SMPPMessage)
@@ -754,10 +733,7 @@ func (this *SMPPMessage) Equal(that interface{}) bool {
 		}
 	}
 	if that1 == nil {
-		if this == nil {
-			return true
-		}
-		return false
+		return this == nil
 	} else if this == nil {
 		return false
 	}

@@ -53,7 +53,7 @@ func (self *DuraQueue) Init(ctx context.Context, dbURL string) {
 
 	if self.WorkerName == "" {
 		if hostname, err := os.Hostname(); err != nil {
-			log.Fatal("duraqueue._init os.Hostname() error:", err)
+			log.Fatal("duraqueue.Init os.Hostname() error:", err)
 		} else {
 			self.WorkerName = fmt.Sprintf("host:%s:pid:%d:started:%s",
 				hostname, os.Getpid(), time.Now().UTC().Truncate(time.Minute).Format("2006-01-02T15:04"))
@@ -65,6 +65,7 @@ func (self *DuraQueue) Init(ctx context.Context, dbURL string) {
 	if junk.MustContextGetBool(ctx, "log-debug") {
 		dbDriver = "sqlite3_tracing"
 	}
+	log.Printf("duraqueue.Init")
 	if self.db, err = sql.Open(dbDriver, dbURL); err != nil {
 		log.Fatal(err)
 	}
