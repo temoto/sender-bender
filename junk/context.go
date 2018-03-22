@@ -54,6 +54,25 @@ func MustContextGetInt(ctx context.Context, key string) int {
 	return 0
 }
 
+func MustContextGetString(ctx context.Context, key string) string {
+	a := ctx.Value(key)
+	if a == nil {
+		log.Fatalf("context[%s] not found", key)
+		return ""
+	}
+	if b, ok := a.(string); ok {
+		return b
+	}
+	if b, ok := a.(*string); ok {
+		return *b
+	}
+	if b, ok := a.([]byte); ok {
+		return string(b)
+	}
+	log.Fatalf("context[%s] is not string or bytes (%#v)", a)
+	return ""
+}
+
 func ContextSetMap(parent context.Context, m map[string]interface{}) context.Context {
 	ctx := parent
 	for key, value := range m {
